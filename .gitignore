@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# pytest
+.pytest_cache/
+.cache/
+*.pytest_cache
+
+# Test results / reports
+reports/
+*.xml
+*.html
+junit/
+
+# IDE / editor
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Datasheets — large PDF files, do not commit
+Datasheets/
+
+# Local VISA / instrument config overrides (may contain IP addresses, ports)
+config_local.py
+
+# Claude Code internal session data
+.claude/

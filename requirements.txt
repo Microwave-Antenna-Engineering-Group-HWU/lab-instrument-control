@@ -1,0 +1,17 @@
+# Core VISA communication
+pyvisa>=1.13.0
+
+# Pure-Python VISA backend (no NI-VISA install required)
+# Handles serial (RS-422) and USB-TMC instruments via OS drivers
+pyvisa-py>=0.7.2
+
+# Serial port support (required by pyvisa-py for RS-422/RS-232 instruments)
+pyserial>=3.5
+
+# USB instrument support (required by pyvisa-py for USB-TMC instruments)
+# Also install libusb-1.0 system driver via Zadig on Windows:
+#   https://zadig.akeo.ie  →  select your instrument → Install WinUSB
+pyusb>=1.2.1
+
+# Test framework
+pytest>=7.4.0
