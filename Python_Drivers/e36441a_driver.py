@@ -357,6 +357,12 @@ class E36441A:
             raise ValueError('pin must be 1, 2, or 3')
         self.write(f'DIG:PIN{pin}:FUNC {function.upper()}')
 
+    def get_pin_function(self, pin: int) -> str:
+        """Query the current function configured on a digital I/O pin (1–3)."""
+        if pin not in (1, 2, 3):
+            raise ValueError('pin must be 1, 2, or 3')
+        return self.query(f'DIG:PIN{pin}:FUNC?')
+
     def write_digital_output(self, value: int):
         """
         Write binary value to all digital output pins.
