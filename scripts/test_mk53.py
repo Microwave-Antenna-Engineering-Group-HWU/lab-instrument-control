@@ -29,7 +29,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from mk53_driver import MK53
 
 # ── Connection settings ────────────────────────────────────────────────────
-VISA_ADDR  = 'ASRL3::INSTR'  # ← update COM port (check Device Manager)
+VISA_ADDR  = 'ASRL3::INSTR'  # ← update COM port (check Device Manager, e.g. COM3 → ASRL3::INSTR)
 SLAVE_ADDR = 1                # ← DIP switch address on MK53 rear panel
 MIN_TEMP   = -40.0            # °C  safety limit
 MAX_TEMP   = 180.0            # °C  safety limit
@@ -134,8 +134,32 @@ def run():
             print(f'{FAIL} Setpoint write failed: {exc}')
             errors.append(f'Setpoint write failed: {exc}')
 
-        # ── 6. Identify (composed summary) ────────────────────────────────
-        section('Step 6 — Instrument summary')
+        # ── 6. Wait for temperature stability ─────────────────────────────
+        section('Step 6 — Wait for temperature stability')
+        try:
+            sp = chamber.get_temperature_setpoint()
+            print(f'{INFO} Waiting for chamber to reach {sp:.2f}°C '
+                  f'(±0.5°C for 60 s, timeout 15 min) ...')
+            stable = chamber.wait_for_stability(
+                setpoint_c=sp,
+                tolerance_c=0.5,
+                stable_seconds=60,
+                timeout_seconds=900,
+                poll_interval_s=5.0,
+            )
+            actual = chamber.get_temperature()
+            if stable:
+                print(f'{PASS} Stable at {actual:.2f}°C')
+            else:
+                print(f'{FAIL} Timed out — actual temp is {actual:.2f}°C, '
+                      f'setpoint is {sp:.2f}°C')
+                errors.append('Temperature stability timeout')
+        except Exception as exc:
+            print(f'{FAIL} Stability wait failed: {exc}')
+            errors.append(f'Stability wait failed: {exc}')
+
+        # ── 7. Identify (composed summary) ────────────────────────────────
+        section('Step 7 — Instrument summary')
         try:
             print(chamber.identify())
         except Exception as exc:
