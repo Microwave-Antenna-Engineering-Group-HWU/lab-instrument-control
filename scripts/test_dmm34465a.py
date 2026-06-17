@@ -18,7 +18,7 @@ What this script verifies
 Hardware requirement
 ────────────────────
 Keysight 34465A connected via USB or GPIB or LAN.
-Update DMM_RESOURCE in config.py to match the actual VISA address.
+Update VISA_ADDR below to match the actual VISA address.
 
 Run:
     python scripts/test_dmm34465a.py
@@ -31,8 +31,10 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'Python_Drivers'))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-import config
 from dmm34465a_driver import DMM34465A
+
+# ── VISA address ───────────────────────────────────────────────────────────
+VISA_ADDR = 'USB0::10893::257::MY64039038::0::INSTR'  # ← update this
 
 PASS = '[PASS]'
 FAIL = '[FAIL]'
@@ -49,20 +51,20 @@ def run():
     print('=' * 60)
     print('  Keysight 34465A DMM — First-Time Connection Test')
     print('=' * 60)
-    print(f'{INFO} VISA resource : {config.DMM_RESOURCE}')
+    print(f'{INFO} VISA resource : {VISA_ADDR}')
 
     errors = []
 
     # ── 1. Open connection ─────────────────────────────────────────────────
     section('Step 1 — Open VISA connection')
     try:
-        dmm = DMM34465A(config.DMM_RESOURCE)
+        dmm = DMM34465A(VISA_ADDR)
         print(f'{PASS} Connection opened')
     except Exception as exc:
         print(f'{FAIL} Cannot open resource: {exc}')
         print('\nCheck:')
         print('  • USB cable is connected and WinUSB driver is installed (use Zadig)')
-        print(f'  • DMM_RESOURCE in config.py is correct (currently: {config.DMM_RESOURCE})')
+        print(f'  • DMM_RESOURCE in config.py is correct (currently: {VISA_ADDR})')
         print('  • pyvisa-py backend and pyusb are installed')
         sys.exit(1)
 

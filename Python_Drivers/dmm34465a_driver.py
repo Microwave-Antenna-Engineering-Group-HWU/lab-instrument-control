@@ -30,7 +30,7 @@ class DMM34465A:
     RES_RANGES = (100, 1e3, 10e3, 100e3, 1e6, 10e6, 100e6, 1e9)
 
     def __init__(self, resource_name: str, timeout_ms: int = 10000):
-        rm = pyvisa.ResourceManager()
+        rm = pyvisa.ResourceManager('@py')
         self._instr = rm.open_resource(resource_name)
         self._instr.timeout = timeout_ms
         self._instr.read_termination = '\n'

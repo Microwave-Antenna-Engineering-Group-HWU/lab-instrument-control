@@ -29,7 +29,7 @@ class E36441A:
     MAX_CURRENT = 10.3     # A per channel
 
     def __init__(self, resource_name: str, timeout_ms: int = 5000):
-        rm = pyvisa.ResourceManager()
+        rm = pyvisa.ResourceManager('@py')
         self._instr = rm.open_resource(resource_name)
         self._instr.timeout = timeout_ms
         self._instr.read_termination = '\n'

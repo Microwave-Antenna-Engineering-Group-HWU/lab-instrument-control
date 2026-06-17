@@ -29,8 +29,10 @@ import time
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'Python_Drivers'))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-import config
 from hmp4040_driver import HMP4040
+
+# ── VISA address ───────────────────────────────────────────────────────────
+VISA_ADDR = 'USB0::0x0AAD::0x0135::YOUR_SERIAL::INSTR'  # ← update this
 
 # ── Safe test values — adjust if needed ───────────────────────────────────
 TEST_CHANNEL  = 1       # CH1 is used for the output-on test
@@ -54,7 +56,7 @@ def run():
     print('=' * 60)
     print('  R&S HMP4040 — First-Time Connection Test')
     print('=' * 60)
-    print(f'{INFO} VISA resource : (set in config.py)')
+    print(f'{INFO} VISA resource : {VISA_ADDR}')
     print(f'{WARN} CH{TEST_CHANNEL} output will be enabled at '
           f'{TEST_VOLTAGE} V / {TEST_CURRENT} A briefly.')
     print(f'{WARN} Disconnect any load from CH{TEST_CHANNEL} before continuing.')
@@ -64,10 +66,6 @@ def run():
     # ── 1. Open connection ─────────────────────────────────────────────────
     section('Step 1 — Open VISA connection')
     try:
-        # HMP4040 VISA address is not in the shared config (DMM address is)
-        # Edit VISA_ADDR below to match your setup
-        VISA_ADDR = 'USB0::0x0AAD::0x0135::YOUR_SERIAL::INSTR'
-        # Hint: run  python -c "import pyvisa; print(pyvisa.ResourceManager().list_resources())"
         psu = HMP4040(VISA_ADDR)
         print(f'{PASS} Connection opened')
     except Exception as exc:

@@ -11,7 +11,7 @@ What this script verifies
 Hardware requirement
 ────────────────────
 USB-to-RS422 adapter connected to the MK53 rear panel RS-422 port.
-Set MK53_RESOURCE and MK53_SLAVE_ADDR in config.py before running.
+Update VISA_ADDR and SLAVE_ADDR below before running.
 
 Run:
     python scripts/test_mk53.py          (from project root)
@@ -26,8 +26,13 @@ import time
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'Python_Drivers'))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-import config
 from mk53_driver import MK53
+
+# ── Connection settings ────────────────────────────────────────────────────
+VISA_ADDR  = 'ASRL3::INSTR'  # ← update COM port (check Device Manager)
+SLAVE_ADDR = 1                # ← DIP switch address on MK53 rear panel
+MIN_TEMP   = -40.0            # °C  safety limit
+MAX_TEMP   = 180.0            # °C  safety limit
 
 # ── simple colour-free pass/fail banner ───────────────────────────────────
 PASS = '[PASS]'
@@ -45,8 +50,8 @@ def run():
     print('=' * 55)
     print('  Binder MK53 — First-Time Connection Test')
     print('=' * 55)
-    print(f'{INFO} VISA resource : {config.MK53_RESOURCE}')
-    print(f'{INFO} Slave address : {config.MK53_SLAVE_ADDR}')
+    print(f'{INFO} VISA resource : {VISA_ADDR}')
+    print(f'{INFO} Slave address : {SLAVE_ADDR}')
 
     errors = []
 
@@ -54,17 +59,17 @@ def run():
     section('Step 1 — Open serial connection')
     try:
         chamber = MK53(
-            config.MK53_RESOURCE,
-            slave_address=config.MK53_SLAVE_ADDR,
-            min_temp=config.MK53_MIN_TEMP_C,
-            max_temp=config.MK53_MAX_TEMP_C,
+            VISA_ADDR,
+            slave_address=SLAVE_ADDR,
+            min_temp=MIN_TEMP,
+            max_temp=MAX_TEMP,
         )
         print(f'{PASS} Port opened successfully')
     except Exception as exc:
         print(f'{FAIL} Could not open port: {exc}')
         print('\nCheck:')
         print('  • USB-to-RS422 adapter is plugged in')
-        print(f'  • COM port in config.py matches Device Manager (currently: {config.MK53_RESOURCE})')
+        print(f'  • COM port matches Device Manager (currently: {VISA_ADDR})')
         print('  • No other program has the port open')
         sys.exit(1)
 

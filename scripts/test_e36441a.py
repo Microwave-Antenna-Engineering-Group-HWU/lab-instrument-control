@@ -30,7 +30,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from e36441a_driver import E36441A
 
 # ── Safe test values ───────────────────────────────────────────────────────
-VISA_ADDR    = 'USB0::0x2A8D::0xXXXX::YOUR_SERIAL::INSTR'  # ← update this
+VISA_ADDR    = 'USB0::10893::52228::CN65510106::0::INSTR'  # ← update this
 TEST_CHANNEL = 1
 TEST_VOLTAGE = 3.3      # V
 TEST_CURRENT = 0.1      # A
@@ -143,6 +143,9 @@ def run():
             if abs(v_meas - TEST_VOLTAGE) > 0.1:
                 print(f'      {WARN} Output differs from setpoint by '
                       f'{abs(v_meas - TEST_VOLTAGE):.3f} V')
+
+            print(f'{INFO} Output stays ON for 10 s — check the front panel ...')
+            time.sleep(10)
 
             psu.disable_output(TEST_CHANNEL)
             print(f'{PASS} Output disabled')

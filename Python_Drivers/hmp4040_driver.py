@@ -24,7 +24,7 @@ class HMP4040:
     MAX_CURRENT_CH4 = 5.0      # A
 
     def __init__(self, resource_name: str, timeout_ms: int = 5000):
-        rm = pyvisa.ResourceManager()
+        rm = pyvisa.ResourceManager('@py')
         self._instr = rm.open_resource(resource_name)
         self._instr.timeout = timeout_ms
         self._instr.read_termination = '\n'

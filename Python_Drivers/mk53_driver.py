@@ -94,7 +94,7 @@ class MK53:
         self.min_temp = min_temp
         self.max_temp = max_temp
 
-        rm = pyvisa.ResourceManager()
+        rm = pyvisa.ResourceManager('@py')
         self._instr = rm.open_resource(resource_name)
         self._instr.timeout = timeout_ms
 

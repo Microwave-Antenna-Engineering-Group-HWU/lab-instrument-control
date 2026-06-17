@@ -20,53 +20,84 @@ Lab_Equipment_Python_Drivers/
 │   ├── dmm34465a_driver.py
 │   ├── hmp4040_driver.py
 │   └── e36441a_driver.py
+├── scripts/
+│   ├── list_visa_resources.py    # Discover VISA addresses of connected instruments
+│   ├── test_e36441a.py           # First-time sanity check for E36441A
+│   ├── test_dmm34465a.py         # First-time sanity check for 34465A
+│   ├── test_hmp4040.py           # First-time sanity check for HMP4040
+│   └── test_mk53.py              # First-time sanity check for MK53
 ├── Datasheets/              # Programming guides and user manuals (not committed)
 ├── tests/
 │   └── test_thermal_voltage.py   # Thermal + electrical DUT test
 ├── conftest.py              # pytest session fixtures (instrument connections)
-├── config.py                # VISA addresses and test parameters — edit this
-├── pytest.ini               # pytest configuration
+├── config.py                # Shared test parameters (temperatures, tolerances)
 ├── requirements.txt         # Python dependencies
 └── README.md
 ```
 
 ## Setup
 
-### 1. Install Python dependencies
+### 1. Install Python 3.12
+
+Download and install Python 3.12 from `python.org`. Python 3.12 is recommended — it has stable support for all packages used here (`pyusb`, `libusb-package`, `pyvisa-py`).
+
+### 2. Create a virtual environment and install dependencies
 
 ```bash
-pip install -r requirements.txt
+python -m venv .venv
+.venv\Scripts\pip install -r requirements.txt
 ```
 
-### 2. USB instrument driver (Keysight 34465A and similar USB-TMC devices)
+### 3. USB instrument driver — Zadig (Windows only)
 
-On Windows, USB-TMC instruments need the **WinUSB** driver installed via [Zadig](https://zadig.akeo.ie):
+USB-TMC instruments (34465A, HMP4040, E36441A) require the **WinUSB** driver on Windows. Use [Zadig](https://zadig.akeo.ie) to install it:
 
-1. Plug in the instrument
-2. Open Zadig → Options → List All Devices
-3. Select your instrument → Install Driver → **WinUSB**
+1. Plug in the instrument and power it on
+2. Open Zadig → `Options` → tick **List All Devices**
+3. Find your instrument in the dropdown (e.g. "E36441A", "34465A")
+4. Set the driver to **WinUSB** → click **Install Driver** (or **Replace Driver**)
 
-### 3. RS-422 serial adapter (Binder MK53)
+> **Note:** You need to do this once per instrument. If Windows reverts the driver after unplugging and replugging, open Zadig again and click **Replace Driver**.
+
+### 4. RS-422 serial adapter (Binder MK53 only)
 
 The MK53 rear panel uses RS-422 (differential serial). You need a **USB-to-RS-422 adapter** (not RS-232). FTDI-based adapters work reliably on Windows — they appear as a COM port after driver install.
 
-### 4. Edit `config.py`
+### 5. Find your instrument VISA addresses
 
-Update the VISA resource strings to match your hardware:
+Run the discovery script to list all connected instruments and their addresses:
 
-```python
-MK53_RESOURCE  = 'ASRL3::INSTR'       # change COM number
-DMM_RESOURCE   = 'USB0::0x2A8D::...'  # replace serial number
+```bash
+python scripts/list_visa_resources.py
 ```
 
-Discover available resources:
+Example output:
+```
+Found 2 VISA resource(s):
 
-```python
-import pyvisa
-print(pyvisa.ResourceManager().list_resources())
+  USB0::10893::52228::CN65510106::0::INSTR
+    IDN : Keysight Technologies,E36441A,CN65510106,01.00-01.06-01.04
+
+  USB0::10893::257::MY64039038::0::INSTR
+    IDN : Keysight Technologies,34465A,MY64039038,A.03.10
 ```
 
-## Running the tests
+Copy the address for each instrument and paste it into `VISA_ADDR` at the top of the corresponding test script.
+
+## Running the sanity-check scripts
+
+Each instrument has a standalone test script. Run them directly with Python:
+
+```bash
+python scripts/test_e36441a.py
+python scripts/test_dmm34465a.py
+python scripts/test_hmp4040.py
+python scripts/test_mk53.py
+```
+
+Before running, open the script and update `VISA_ADDR` at the top to match your instrument's address from `list_visa_resources.py`.
+
+## Running the automated tests
 
 ```bash
 # Run all tests from the project root
@@ -99,7 +130,7 @@ with MK53('ASRL3::INSTR', slave_address=1) as chamber:
     chamber.wait_for_stability(22.0, tolerance_c=0.5, stable_seconds=60)
     print(chamber.get_temperature())
 
-with DMM34465A('USB0::0x2A8D::0x0101::MY12345678::INSTR') as dmm:
+with DMM34465A('USB0::10893::257::MY64039038::0::INSTR') as dmm:
     print(dmm.measure_vdc())
 ```
 
