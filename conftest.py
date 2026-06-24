@@ -15,6 +15,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'Python_Drivers'))
 import config
 from mk53_driver import MK53
 from dmm34465a_driver import DMM34465A
+from e36441a_driver import E36441A
 
 
 @pytest.fixture(scope='session')
@@ -36,6 +37,25 @@ def dmm():
         d.reset()
         d.set_nplc_vdc(config.DMM_NPLC)
         yield d
+
+
+@pytest.fixture(scope='session')
+def psu():
+    """
+    Open connection to Keysight E36441A, set DUT supply voltage, and enable output.
+    Output is disabled automatically when the session ends.
+    """
+    with E36441A(config.PSU_RESOURCE) as p:
+        p.reset()
+        p.apply(config.PSU_CHANNEL, config.PSU_VOLTAGE_V, config.PSU_CURRENT_LIM_A)
+        p.enable_output(config.PSU_CHANNEL)
+        print(
+            f'\n[fixture] PSU CH{config.PSU_CHANNEL} enabled: '
+            f'{config.PSU_VOLTAGE_V} V / {config.PSU_CURRENT_LIM_A} A limit'
+        )
+        yield p
+        p.disable_output(config.PSU_CHANNEL)
+        print(f'\n[fixture] PSU CH{config.PSU_CHANNEL} disabled')
 
 
 @pytest.fixture(scope='session')

@@ -10,6 +10,7 @@ PyVISA-based instrument drivers and automated test scripts for bench lab equipme
 | `Python_Drivers/dmm34465a_driver.py` | Keysight 34465A — 6½-digit DMM | USB-TMC / GPIB / LAN |
 | `Python_Drivers/hmp4040_driver.py` | R&S HMP4040 — 4-ch DC Power Supply | USB-TMC / GPIB / LAN |
 | `Python_Drivers/e36441a_driver.py` | Keysight E36441A — 4-ch DC Power Supply | USB-TMC / GPIB / LAN |
+| `Python_Drivers/e4980a_driver.py` | Keysight E4980A — Precision LCR Meter | USB-TMC / GPIB / LAN |
 
 ## Project structure
 
@@ -19,16 +20,19 @@ Lab_Equipment_Python_Drivers/
 │   ├── mk53_driver.py
 │   ├── dmm34465a_driver.py
 │   ├── hmp4040_driver.py
-│   └── e36441a_driver.py
+│   ├── e36441a_driver.py
+│   └── e4980a_driver.py
 ├── scripts/
 │   ├── list_visa_resources.py    # Discover VISA addresses of connected instruments
 │   ├── test_e36441a.py           # First-time sanity check for E36441A
 │   ├── test_dmm34465a.py         # First-time sanity check for 34465A
 │   ├── test_hmp4040.py           # First-time sanity check for HMP4040
-│   └── test_mk53.py              # First-time sanity check for MK53
+│   ├── test_mk53.py              # First-time sanity check for MK53
+│   ├── test_e4980a.py            # First-time sanity check for E4980A (1 MHz Cp-D)
+│   └── thermal_setup.py          # Configure PSU + chamber + take one VDD reading
 ├── Datasheets/              # Programming guides and user manuals (not committed)
 ├── tests/
-│   └── test_thermal_voltage.py   # Thermal + electrical DUT test
+│   └── test_thermal_voltage.py   # Thermal + electrical DUT test (PSU + DMM + chamber)
 ├── conftest.py              # pytest session fixtures (instrument connections)
 ├── config.py                # Shared test parameters (temperatures, tolerances)
 ├── requirements.txt         # Python dependencies
@@ -50,7 +54,7 @@ python -m venv .venv
 
 ### 3. USB instrument driver — Zadig (Windows only)
 
-USB-TMC instruments (34465A, HMP4040, E36441A) require the **WinUSB** driver on Windows. Use [Zadig](https://zadig.akeo.ie) to install it:
+USB-TMC instruments (34465A, HMP4040, E36441A, E4980A) require the **WinUSB** driver on Windows. Use [Zadig](https://zadig.akeo.ie) to install it:
 
 1. Plug in the instrument and power it on
 2. Open Zadig → `Options` → tick **List All Devices**
@@ -93,6 +97,7 @@ python scripts/test_e36441a.py
 python scripts/test_dmm34465a.py
 python scripts/test_hmp4040.py
 python scripts/test_mk53.py
+python scripts/test_e4980a.py
 ```
 
 Before running, open the script and update `VISA_ADDR` at the top to match your instrument's address from `list_visa_resources.py`.
@@ -112,12 +117,26 @@ pytest tests/test_thermal_voltage.py::TestThermalVoltage::test_dut_voltage_at_22
 
 ### What the thermal voltage test does
 
-1. Connects to the Binder MK53 and Keysight 34465A
-2. Sets the chamber to **22 °C** and waits up to 15 minutes for stability (±0.5 °C for 60 s)
-3. Takes **5 DC voltage readings** from the DMM and averages them
-4. Asserts the average is within **3.0 ± 0.5 V**
+1. Connects to the Keysight E36441A, Keysight 34465A, and Binder MK53
+2. Powers the DUT via the PSU at the configured voltage and current limit
+3. Sets the chamber to **22 °C** and waits up to 15 minutes for stability (±0.5 °C for 60 s)
+4. Verifies the PSU is in CV mode and delivering the expected voltage
+5. Takes **5 DC voltage readings** from the DMM and averages them
+6. Asserts the average is within the configured pass window
 
 All parameters are configurable in `config.py`.
+
+### One-shot setup script
+
+`thermal_setup.py` configures all three instruments in a single run and then exits — the PSU and chamber keep their state after the script ends:
+
+```bash
+python scripts/thermal_setup.py
+```
+
+- Sets PSU CH1 to **12 V / 1 A** limit and enables output
+- Takes one VDD measurement with the DMM
+- Sets the chamber setpoint to **20 °C**
 
 ## Using the drivers standalone
 
@@ -142,3 +161,4 @@ with DMM34465A('USB0::10893::257::MY64039038::0::INSTR') as dmm:
 | Keysight 34465A | SCPI over USB-TMC / GPIB / LAN |
 | R&S HMP4040 | SCPI — channel selected with `INST OUT{n}` before setpoint commands |
 | Keysight E36441A | SCPI — inline channel list `(@n)` syntax throughout |
+| Keysight E4980A | SCPI — `*TRG` triggers and returns measurement data; `FETC:IMP?` reads last result |
