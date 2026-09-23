@@ -197,7 +197,7 @@ def run():
         section('Step 10 — Check error queue')
         try:
             err = psu.get_error()
-            if '+0' in err or 'No error' in err.lower():
+            if err.split(',')[0].strip() in ('0', '+0'):   # '+0,"No error"'
                 print(f'{PASS} Error queue : {err}')
             else:
                 print(f'{FAIL} Error in queue : {err}')
@@ -214,7 +214,8 @@ def run():
     else:
         print('  RESULT: PASS  — E36441A is communicating and working correctly')
     print('=' * 60)
+    return 1 if errors else 0
 
 
 if __name__ == '__main__':
-    run()
+    sys.exit(run())

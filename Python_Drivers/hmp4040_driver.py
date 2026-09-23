@@ -70,8 +70,8 @@ class HMP4040:
         self.query('*OPC?')
 
     def self_test(self) -> bool:
-        """Return True if self-test passes (returns '0')."""
-        return self.query('*TST?').strip() == '0'
+        """Return True if self-test passes (returns 0, possibly as '+0')."""
+        return int(float(self.query('*TST?'))) == 0
 
     def save_state(self, slot: int):
         """Save current instrument state to non-volatile slot (1–10)."""
@@ -251,6 +251,8 @@ class HMP4040:
           bit 0 (=1) → CC mode
           bit 1 (=2) → CV mode
         """
+        if channel not in range(1, self.N_CHANNELS + 1):
+            raise ValueError(f'channel must be 1–{self.N_CHANNELS}')
         cond = int(self.query(f'STAT:QUES:INST:ISUM{channel}:COND?'))
         if cond & 0x01:
             return 'CC'

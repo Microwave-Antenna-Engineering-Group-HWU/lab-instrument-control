@@ -33,6 +33,7 @@ Lab_Equipment_Python_Drivers/
 ├── Datasheets/              # Programming guides and user manuals (not committed)
 ├── tests/
 │   └── test_thermal_voltage.py   # Thermal + electrical DUT test (PSU + DMM + chamber)
+├── unit_tests/                   # Offline driver tests with simulated instruments
 ├── conftest.py              # pytest session fixtures (instrument connections)
 ├── config.py                # Shared test parameters (temperatures, tolerances)
 ├── requirements.txt         # Python dependencies
@@ -96,11 +97,21 @@ Each instrument has a standalone test script. Run them directly with Python:
 python scripts/test_e36441a.py
 python scripts/test_dmm34465a.py
 python scripts/test_hmp4040.py
-python scripts/test_mk53.py
+python scripts/test_mk53.py                # read-only; add --write / --stability, --port COM5
 python scripts/test_e4980a.py
 ```
 
+Each script exits with code 1 if any step fails. `test_mk53.py` only reads from the chamber unless `--write` or `--stability` is given.
+
 Before running, open the script and update `VISA_ADDR` at the top to match your instrument's address from `list_visa_resources.py`.
+
+## Offline unit tests (no instruments needed)
+
+```bash
+pytest unit_tests
+```
+
+These check the MK53 Modbus framing, retries and safety limits, the 34465A limit-test bits, the E36441A CV/CC detection and the self-test parsing against simulated instruments.
 
 ## Running the automated tests
 

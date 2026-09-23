@@ -23,7 +23,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from e36441a_driver import E36441A
 from dmm34465a_driver import DMM34465A
-from mk53_driver import MK53
+from mk53_driver import MK53, confirm_setpoint
 
 # ── Fixed instrument addresses (confirmed from individual sanity scripts) ──────
 PSU_ADDR     = 'USB0::10893::52228::CN65510106::0::INSTR'
@@ -36,7 +36,7 @@ PSU_CHANNEL   = 1
 PSU_VOLTAGE   = 12.0    # V
 PSU_CURRENT   = 1.0     # A  (limit)
 CHAMBER_TEMP  = 20.0    # °C
-DMM_RANGE     = 20      # V  (covers 12 V supply rail)
+DMM_RANGE     = 100     # V  (34465A ranges: 0.1, 1, 10, 100, 1000; 12 V needs 100)
 
 print('=' * 55)
 print('  Thermal Test Setup')
@@ -75,8 +75,8 @@ print('\n[3/3] Climate chamber (MK53)')
 try:
     with MK53(MK53_ADDR, slave_address=MK53_SLAVE) as chamber:
         chamber.set_temperature(CHAMBER_TEMP)
+        setpt  = confirm_setpoint(chamber, CHAMBER_TEMP)   # controller applies it with a delay
         actual = chamber.get_temperature()
-        setpt  = chamber.get_temperature_setpoint()
     print(f'    Setpoint : {setpt:.1f} °C')
     print(f'    Current  : {actual:.2f} °C')
     print(f'    Status   : running toward {CHAMBER_TEMP:.0f} °C after script exit')

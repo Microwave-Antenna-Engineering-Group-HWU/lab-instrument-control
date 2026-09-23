@@ -315,16 +315,21 @@ class DMM34465A:
 
     def read_multi(self, count: int) -> list:
         """
-        Convenience: configure sample count, arm, software-trigger,
-        and fetch all readings. Returns list of floats.
-        Requires trigger source = BUS (set before calling if needed).
+        Convenience: set the sample count, arm, software-trigger and fetch
+        all readings. Returns a list of floats.
+        Uses the BUS trigger internally, then restores immediate triggering
+        and a sample count of 1, so later read() calls still work.
         """
         self.write(f'SAMP:COUN {count}')
         self.write('TRIG:SOUR BUS')
-        self.write('INIT')
-        self.write('*TRG')
-        self.query('*OPC?')          # wait for all samples to be taken
-        return self.fetch()
+        try:
+            self.write('INIT')
+            self.write('*TRG')
+            self.query('*OPC?')          # wait for all samples to be taken
+            return self.fetch()
+        finally:
+            self.write('TRIG:SOUR IMM')
+            self.write('SAMP:COUN 1')
 
     # ------------------------------------------------------------------
     # Reading memory management
@@ -371,11 +376,13 @@ class DMM34465A:
     def check_limits(self) -> dict:
         """
         Return {'pass': bool, 'low': bool, 'high': bool}.
-        Reads STAT:QUES? — bit 9 = lower fail, bit 10 = upper fail.
+        Reads the Questionable Data event register (STAT:QUES?):
+        bit 11 = lower limit failed, bit 12 = upper limit failed.
+        Reading the event register clears it.
         """
         val = int(self.query('STAT:QUES?'))
-        lower_fail = bool(val & (1 << 9))
-        upper_fail = bool(val & (1 << 10))
+        lower_fail = bool(val & (1 << 11))
+        upper_fail = bool(val & (1 << 12))
         return {
             'pass': not (lower_fail or upper_fail),
             'low': lower_fail,

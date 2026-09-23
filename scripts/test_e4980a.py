@@ -179,17 +179,15 @@ def run():
             errors.append(f'OPEN correction failed: {exc}')
 
         # ── 10. SHORT correction ───────────────────────────────────────────────
-        section('Step 10 — Execute SHORT correction')
-        print(f'{INFO} NOTE: SHORT correction with open terminals gives meaningless data.')
-        print(f'{INFO}       This step only verifies the command is accepted without error.')
+        section('Step 10 — SHORT correction state (read only)')
+        print(f'{INFO} A SHORT correction needs shorted terminals; running one here would')
+        print(f'{INFO} overwrite the stored SHORT data with open-circuit data, so only query.')
         try:
-            lcr.execute_short_correction()
-            lcr.wait_opc()
-            print(f'{PASS} SHORT correction command accepted (disable it — open terminals)')
-            lcr.set_short_correction(False)
+            state = lcr.query('CORR:SHOR:STAT?')
+            print(f'{PASS} SHORT correction state : {state}')
         except Exception as exc:
-            print(f'{FAIL} SHORT correction failed: {exc}')
-            errors.append(f'SHORT correction failed: {exc}')
+            print(f'{FAIL} SHORT correction query failed: {exc}')
+            errors.append(f'SHORT correction query failed: {exc}')
 
         # ── 11. Capacitance measurement at 1 MHz ──────────────────────────────
         section('Step 11 — Capacitance measurement at 1 MHz (open terminals)')
@@ -250,7 +248,7 @@ def run():
         section('Step 15 — Check error queue')
         try:
             err = lcr.get_error()
-            if '+0' in err or 'No error' in err.lower():
+            if err.split(',')[0].strip() in ('0', '+0'):   # '+0,"No error"'
                 print(f'{PASS} Error queue : {err}  (no errors)')
             else:
                 print(f'{FAIL} Error in queue : {err}')
@@ -267,7 +265,8 @@ def run():
     else:
         print('  RESULT: PASS  — E4980A is communicating correctly')
     print('=' * 60)
+    return 1 if errors else 0
 
 
 if __name__ == '__main__':
-    run()
+    sys.exit(run())

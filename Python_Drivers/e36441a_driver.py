@@ -84,8 +84,8 @@ class E36441A:
         self.query('*OPC?')
 
     def self_test(self) -> bool:
-        """Return True if self-test passes (returns '0')."""
-        return self.query('*TST?').strip() == '0'
+        """Return True if self-test passes (returns 0, possibly as '+0')."""
+        return int(float(self.query('*TST?'))) == 0
 
     def save_state(self, slot: int):
         """Save full instrument state to non-volatile slot 0–9."""
@@ -162,7 +162,7 @@ class E36441A:
     def get_output_state(self, channel: int) -> bool:
         """Return True if channel output is ON."""
         self._validate_ch(channel)
-        return self.query(f'OUTP? {self._ch(channel)}').strip() == '1'
+        return self.query(f'OUTP? {self._ch(channel)}').strip() in ('1', 'ON')
 
     def disable_all_outputs(self):
         """Disable all 4 channels simultaneously."""
@@ -272,11 +272,23 @@ class E36441A:
 
     def get_regulation_mode(self, channel: int) -> str:
         """
-        Return 'CV' or 'CC' for channel.
-        Queries OUTP:PMOD? which returns 'VOLT' (CV) or 'CURR' (CC).
+        Return 'CV', 'CC' or 'OFF' for channel.
+
+        Decided from the measured output against the setpoints: the channel
+        is in CC when its current has reached the current limit and its
+        voltage has fallen below the voltage setpoint, otherwise CV.
+        (OUTP:PMOD? is only the preferred-mode setting, not the live state.)
         """
         self._validate_ch(channel)
-        return self.query(f'OUTP:PMOD? {self._ch(channel)}')
+        if not self.get_output_state(channel):
+            return 'OFF'
+        v_set = self.get_voltage_setpoint(channel)
+        i_set = self.get_current_setpoint(channel)
+        v = self.measure_voltage(channel)
+        i = self.measure_current(channel)
+        at_limit = i >= i_set - max(0.02 * i_set, 1e-3)
+        sagging = v < v_set - max(0.02 * v_set, 0.01)
+        return 'CC' if at_limit and sagging else 'CV'
 
     # ------------------------------------------------------------------
     # Over-Current Protection (OCP)
