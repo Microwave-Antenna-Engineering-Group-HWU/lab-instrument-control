@@ -2,6 +2,8 @@
 
 PyVISA-based instrument drivers and automated test scripts for bench lab equipment.
 
+The main repository is [daskals/lab-instrument-control](https://github.com/daskals/lab-instrument-control). A copy in the [Microwave Antenna Engineering Group](https://github.com/Microwave-Antenna-Engineering-Group-HWU/lab-instrument-control) organisation is updated automatically on every push to `master`, so please open issues and pull requests on the main repository.
+
 ## Instruments supported
 
 | Driver file | Instrument | Interface |
